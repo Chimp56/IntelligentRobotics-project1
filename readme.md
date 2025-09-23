@@ -25,3 +25,7 @@ roslaunch project1 reactive_mapping.launch
 ```
 
 This will use gmapping and the reactive controller module found in /scripts/reactive_controller.py to navigate and map the environment.
+
+## Help
+
+https://wiki.ros.org/rospy/Overview/
