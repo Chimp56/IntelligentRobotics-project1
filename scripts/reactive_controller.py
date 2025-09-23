@@ -27,6 +27,24 @@ class ReactiveController:
         
         self.collision_detected = False
 
+    def run(self):
+        """
+        High level control loop
+        """
+        rate = rospy.Rate(10)  # 10 Hz
+        
+        while not rospy.is_shutdown():
+            self.drive_forward(FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN)
+
+            if self.collision_detected:
+                rospy.loginfo("Robot halted due to collision")
+                # Stay in collision state until manually reset
+                rate.sleep()
+                continue
+
+            
+            rate.sleep()
+
     def bumper_callback(self, data):
         """
         Callback function for bumper events
@@ -75,23 +93,7 @@ class ReactiveController:
     def drive_forward(self, distance_feet):
         ...
 
-    def run(self):
-        """
-        Runs on initilziaton
-        """
-        rate = rospy.Rate(10)  # 10 Hz
-        
-        while not rospy.is_shutdown():
-            self.drive_forward(FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN)
 
-            if self.collision_detected:
-                rospy.loginfo("Robot halted due to collision")
-                # Stay in collision state until manually reset
-                rate.sleep()
-                continue
-
-            
-            rate.sleep()
 
 
 if __name__ == '__main__':
