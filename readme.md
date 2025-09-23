@@ -29,3 +29,5 @@ This will use gmapping and the reactive controller module found in /scripts/reac
 ## Help
 
 https://wiki.ros.org/rospy/Overview/
+
+https://wiki.ros.org/ROS/Tutorials/WritingPublisherSubscriber%28python%29
