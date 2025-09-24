@@ -50,7 +50,7 @@ class ReactiveController:
         Callback function for bumper events
         """
         if data.state == BumperEvent.PRESSED:
-            rospy.loginfo(f'Collision detected! Bumper: {data.bumper} (0=LEFT, 1=CENTER, 2=RIGHT)')
+            rospy.loginfo('Collision detected! Bumper: (0=LEFT, 1=CENTER, 2=RIGHT)')
             self.collision_detected = True
             self.state = 'COLLISION'
             self.on_collision()
