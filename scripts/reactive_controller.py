@@ -279,7 +279,7 @@ class ReactiveController:
 
     def drive_forward(self):
         forward_msg = Twist()
-        forward_msg.linear.x = .4
+        forward_msg.linear.x = .2
         forward_msg.angular.x = 0.0
         self.cmd_vel_pub.publish(forward_msg)
 
