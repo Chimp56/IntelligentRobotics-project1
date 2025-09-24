@@ -68,7 +68,7 @@ class ReactiveController:
             rospy.loginfo(collision_detected_str)
             self.collision_detected = True
             self.state = 'COLLISION'
-            self.on_collision()
+            self.halt_robot()
         elif data.state == BumperEvent.RELEASED:
             bumper_relaesed_str = "Bumper released: " + str(data.bumper)
             rospy.loginfo(bumper_relaesed_str)
@@ -86,7 +86,10 @@ class ReactiveController:
         """
         if self.laser_data is None:
             return
+
+        rospy.loginfo("Checking obstacles ahead")
         
+
         # Convert distance threshold to meters
         distance_threshold = FRONT_ESCAPE_DISTANCE_FEET * METERS_PER_FEET
         
@@ -114,10 +117,13 @@ class ReactiveController:
         front_ranges = ranges[front_start_idx:front_end_idx]
         front_ranges = front_ranges[np.isfinite(front_ranges)]
         front_ranges = front_ranges[front_ranges < self.laser_data.range_max]
+
+        rospy.loginfo("Closest obstacle: {:.2f}m".format(np.min(front_ranges)))
         
         # Check if any obstacle is within threshold
         if len(front_ranges) > 0 and np.min(front_ranges) < distance_threshold:
             self.obstacle_detected = True
+            rospy.loginfo("Obstacle detected")
             rospy.loginfo("Obstacle detected at {:.2f}m (threshold: {:.2f}m)".format(np.min(front_ranges), distance_threshold))
             
             # Determine if obstacle is symmetric or asymmetric
@@ -156,7 +162,7 @@ class ReactiveController:
         rospy.loginfo("Obstacle symmetry check: left={:.2f}m, right={:.2f}m, symmetric={}".format(left_avg, right_avg, is_symmetric))
         return is_symmetric
 
-    def on_collision(self):
+    def halt_robot(self):
         """
         Handle collision by immediately halting the robot
         """
