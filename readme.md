@@ -42,6 +42,12 @@ To watch the mapping process, open a new terminal and run:
 ```bash
 roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
+
+To control turtlebot using keyboard, run:
+```
+roslaunch turtlebot_teleop keyboard_teleop.launch
+```
+
 ## Help
 
 https://wiki.ros.org/rospy/Overview/
@@ -57,6 +63,12 @@ https://docs.ros.org/en/noetic/api/turtlebot3_msgs/html/msg/SensorState.html
 https://docs.ros.org/en/hydro/api/kobuki_msgs/html/msg/BumperEvent.html
 
 https://wiki.ros.org/kobuki_bumper2pc/hydro
+
+### escape obstacle
+
+https://robotics.stackexchange.com/questions/74901/how-can-i-tell-the-distance-from-a-turtlebot-to-an-obstacle
+
+https://www.mathworks.com/help/nav/ug/obstacle-avoidance-with-turtlebot-and-vfh.html
 
 
 ### Vincent reactive mapping debugger shortcut
