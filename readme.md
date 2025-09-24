@@ -52,3 +52,13 @@ https://docs.ros.org/en/noetic/api/turtlebot3_msgs/html/msg/SensorState.html
 https://docs.ros.org/en/hydro/api/kobuki_msgs/html/msg/BumperEvent.html
 
 https://wiki.ros.org/kobuki_bumper2pc/hydro
+
+
+### Vincent reactive mapping debugger shortcut
+
+```
+git stash
+git pull
+chmod +x scripts/reactive_controller.py
+roslaunch project1 reactive_mapping.launch
+```
