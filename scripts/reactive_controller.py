@@ -278,7 +278,7 @@ class ReactiveController:
 
     def drive_forward(self):
         forward_msg = Twist()
-        forward_msg.linear.x = .8
+        forward_msg.linear.x = .1
         forward_msg.linear.y = 0.0
         forward_msg.linear.z = 0.0
         forward_msg.angular.x = 0.0
