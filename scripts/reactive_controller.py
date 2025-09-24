@@ -118,7 +118,9 @@ class ReactiveController:
         front_ranges = front_ranges[np.isfinite(front_ranges)]
         front_ranges = front_ranges[front_ranges < self.laser_data.range_max]
 
-        rospy.loginfo("Closest obstacle: {:.2f}m".format(np.min(front_ranges)))
+        # Debug logging
+        if len(front_ranges) > 0:
+            rospy.loginfo("Closest obstacle: {:.2f}m".format(np.min(front_ranges)))
         
         # Check if any obstacle is within threshold
         if len(front_ranges) > 0 and np.min(front_ranges) < distance_threshold:
