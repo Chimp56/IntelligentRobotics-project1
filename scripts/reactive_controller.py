@@ -170,16 +170,8 @@ class ReactiveController:
         """
         Handle collision by immediately halting the robot
         """
-        rospy.loginfo("HALTING ROBOT - Collision detected!")
-        
         halt_msg = Twist()
-        halt_msg.linear.x = 0.0
-        halt_msg.linear.y = 0.0
-        halt_msg.linear.z = 0.0
-        halt_msg.angular.x = 0.0
-        halt_msg.angular.y = 0.0
-        halt_msg.angular.z = 0.0
-        
+
         # Publish the halt command
         self.cmd_vel_pub.publish(halt_msg)
         
@@ -281,19 +273,13 @@ class ReactiveController:
             rate.sleep()
         
         # Stop after turn
-        stop_msg = Twist()
-        self.cmd_vel_pub.publish(stop_msg)
+        self.halt_robot()
 
 
 
     def drive_forward(self):
         forward_msg = Twist()
-        forward_msg.linear.x = .1
-        forward_msg.linear.y = 0.0
-        forward_msg.linear.z = 0.0
-        forward_msg.angular.x = 0.0
-        forward_msg.angular.y = 0.0
-        forward_msg.angular.z = 0.0
+        forward_msg.linear.x = .8
         self.cmd_vel_pub.publish(forward_msg)
 
 

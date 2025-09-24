@@ -78,4 +78,5 @@ git stash
 git pull
 chmod +x scripts/reactive_controller.py
 roslaunch project1 reactive_mapping.launch
+
 ```
