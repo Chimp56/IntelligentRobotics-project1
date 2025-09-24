@@ -237,7 +237,7 @@ class ReactiveController:
         right_avg = np.mean(right_ranges) if len(right_ranges) > 0 else 0
         
         # Turn towards clearer side
-        if left_avg > right_avg:
+        if left_avg < right_avg:
             rospy.loginfo("Turning left (clearer path)")
             self.execute_turn(np.radians(90))  # Turn left
         else:
