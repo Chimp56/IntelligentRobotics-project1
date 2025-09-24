@@ -9,6 +9,9 @@ The behaviors your robot will carry out are as follows, ordered from highest pri
 5. Turn randomly (uniformly sampled within ±15°) after every 1ft of forward movement.
 6. Drive forward.
 
+## Requirements
+- Python2
+
 ## Instructions
 
 Clone the repository into your catkin workspace:
@@ -19,7 +22,6 @@ cd ..
 catkin_make
 source devel/setup.bash
 ```
-
 
 To launch the world, robot, and controller, run the following command in your terminal:
 

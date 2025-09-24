@@ -78,22 +78,22 @@ class ReactiveController:
         self.cmd_vel_pub.publish(halt_msg)
         
 
-    def on_symmetric_obstacle_ahead(self):
-        ...
-        # turn a random degree angle between ESCAPE_TURN_DEGREE_ANGLE - ESCAPE_TURN_DEGREE_ANGLE_VARIANCE and ESCAPE_TURN_DEGREE_ANGLE + ESCAPE_TURN_DEGREE_ANGLE
+    # def on_symmetric_obstacle_ahead(self):
+    #     ...
+    #     # turn a random degree angle between ESCAPE_TURN_DEGREE_ANGLE - ESCAPE_TURN_DEGREE_ANGLE_VARIANCE and ESCAPE_TURN_DEGREE_ANGLE + ESCAPE_TURN_DEGREE_ANGLE
 
-    def on_asymmetric_obstacle_ahead(self):
-        ...
+    # def on_asymmetric_obstacle_ahead(self):
+    #     ...
 
-    def on_forward_movement_complete(self):
-        ...
-        # turn a random degree angle between -MAX_RANDOM_TURN_DEGREE_ANGLE and MAX_RANDOM_TURN_DEGREE_ANGLE
+    # def on_forward_movement_complete(self):
+    #     ...
+    #     # turn a random degree angle between -MAX_RANDOM_TURN_DEGREE_ANGLE and MAX_RANDOM_TURN_DEGREE_ANGLE
 
-    def on_keypress(self, key):
-        ...
+    # def on_keypress(self, key):
+    #     ...
 
-    def drive_forward(self, distance_feet):
-        ...
+    # def drive_forward(self, distance_feet):
+    #     ...
 
 
 
