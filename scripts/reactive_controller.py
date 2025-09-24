@@ -16,6 +16,8 @@ ESCAPE_TURN_DEGREE_ANGLE = 180
 ESCAPE_TURN_DEGREE_ANGLE_VARIANCE = 30
 FEET_PER_METER = 3.28084
 METERS_PER_FEET = 1 / FEET_PER_METER
+CAMERA_TO_BASE_FOOTPRINT_OFFSET_METER = 0.087
+CAMERA_TO_BUMPER_OFFSET_METER = 0.40
 
 class ReactiveController:
     def __init__(self):
@@ -87,11 +89,11 @@ class ReactiveController:
         if self.laser_data is None:
             return
 
-        rospy.loginfo("Checking obstacles ahead")
-        
-
         # Convert distance threshold to meters
         distance_threshold = FRONT_ESCAPE_DISTANCE_FEET * METERS_PER_FEET
+
+        # Account for offsets
+        distance_threshold = distance_threshold + CAMERA_TO_BUMPER_OFFSET_METER + CAMERA_TO_BASE_FOOTPRINT_OFFSET_METER
         
         # Get laser ranges
         ranges = np.array(self.laser_data.ranges)
