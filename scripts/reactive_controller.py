@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import random
 import numpy as np
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist
@@ -180,7 +181,6 @@ class ReactiveController:
         rospy.loginfo("Symmetric obstacle detected - executing escape turn")
         
         # Calculate random turn angle
-        import random
         min_angle = ESCAPE_TURN_DEGREE_ANGLE - ESCAPE_TURN_DEGREE_ANGLE_VARIANCE
         max_angle = ESCAPE_TURN_DEGREE_ANGLE + ESCAPE_TURN_DEGREE_ANGLE_VARIANCE
         turn_angle = random.uniform(min_angle, max_angle)
