@@ -37,6 +37,11 @@ roslaunch project1 reactive_mapping.launch
 
 This will use gmapping and the reactive controller module found in /scripts/reactive_controller.py to navigate and map the environment.
 
+To watch the mapping process, open a new terminal and run:
+
+```bash
+roslaunch turtlebot_rviz_launchers view_navigation.launch
+```
 ## Help
 
 https://wiki.ros.org/rospy/Overview/
