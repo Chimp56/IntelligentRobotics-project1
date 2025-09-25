@@ -303,7 +303,7 @@ class ReactiveController:
         Turn randomly
         """
         # i need to check if the robot has driven FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN
-        if self.odom_data is None:
+        if self.odom_data is None or self.x_position_after_turn is None or self.y_position_after_turn is None:
             return
         
         # calculate distance from position_after_turn to odom_data
