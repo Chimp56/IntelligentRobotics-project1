@@ -74,6 +74,10 @@ https://www.mathworks.com/help/nav/ug/obstacle-avoidance-with-turtlebot-and-vfh.
 https://www.theconstruct.ai/read-laserscan-data/
 
 
+### keyboard movement
+
+https://wiki.ros.org/cmd_vel_mux
+
 ### Vincent reactive mapping debugger shortcut
 
 ```
