@@ -30,12 +30,12 @@ class ReactiveController:
 
         rospy.init_node('reactive_controller', anonymous=True)
         
-        # Publisher for velocity commands (use navi navi to seperate concerns)
+        # Publisher for velocity commands (use navi to send controls)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
         
-        # Subscriber for teleop twists to detect human control
+        # Subscriber for teleop twists to detect keyboard control
         self.last_nonzero_teleop_time = None
-        self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
+        self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self.teleop_callback)
         
         # Subscriber for bumper events
         self.bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, self.bumper_callback)
@@ -55,29 +55,6 @@ class ReactiveController:
         self.bumper_pressed = False
         self.collision_release_time = None
         self.collision_time = None
-
-    def _is_nonzero_twist(self, msg):
-        return (abs(msg.linear.x) > TELEOP_EPS or
-                abs(msg.linear.y) > TELEOP_EPS or
-                abs(msg.linear.z) > TELEOP_EPS or
-                abs(msg.angular.x) > TELEOP_EPS or
-                abs(msg.angular.y) > TELEOP_EPS or
-                abs(msg.angular.z) > TELEOP_EPS)
-
-    def _teleop_active(self):
-        if self.last_nonzero_teleop_time is None:
-            return False
-        return (rospy.Time.now() - self.last_nonzero_teleop_time).to_sec() < TELEOP_IDLE_SEC
-
-    def _teleop_callback(self, msg):
-        if self._is_nonzero_twist(msg):
-            time_since_collision = (rospy.Time.now() - self.collision_time).to_sec() if self.collision_time else float('inf')
-            if time_since_collision > COLLISION_TIMEOUT_SEC:
-                self.last_nonzero_teleop_time = rospy.Time.now()
-                # If robot is in HALT state, resume autonomous operation
-                if self.state == 'HALT':
-                    self.state = 'DRIVE_FORWARD'
-                    self.collision_detected = False
 
     def run(self):
         """
@@ -111,37 +88,6 @@ class ReactiveController:
             
             rate.sleep()
 
-    def bumper_callback(self, data):
-        """
-        Callback function for bumper events
-        """
-        if data.state == BumperEvent.PRESSED:
-            collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
-            rospy.loginfo(collision_detected_str)
-            self.bumper_pressed = True
-            self.collision_detected = True
-            self.state = 'COLLISION'
-            self.collision_time = rospy.Time.now()
-            self.halt_robot()
-        elif data.state == BumperEvent.RELEASED:
-            bumper_relaesed_str = "Bumper released: " + str(data.bumper)
-            rospy.loginfo(bumper_relaesed_str)
-            self.bumper_pressed = False
-            # Start debounce timer; run loop will clear collision after stable release
-            self.collision_release_time = rospy.Time.now()
-
-    def laser_callback(self, data):
-        """
-        Callback function for laser scan data
-        """
-        self.laser_data = data
-
-    def odom_callback(self, data):
-        """
-        Callback function for odometry data
-        """
-        self.odom_data = data
-
     def check_obstacles_ahead(self):
         """
         Check if obstacles are within FRONT_ESCAPE_DISTANCE_FEET
@@ -167,52 +113,6 @@ class ReactiveController:
                 self.on_asymmetric_obstacle_ahead()
         else:
             self.obstacle_detected = False
-
-    def is_obstacle_symmetric(self, front_ranges=None):
-        """
-        Determine if obstacle is symmetric by comparing left and right sides
-        """
-        if front_ranges is None:
-            front_ranges, _ = self._compute_front_ranges_and_threshold()
-            if front_ranges is None:
-                return True
-
-        if len(front_ranges) < 3:
-            return True  # Default to symmetric if not enough data
-
-        left_avg, right_avg = self._split_left_right(front_ranges)
-
-        # Consider symmetric if difference is small
-        avg_distance = (left_avg + right_avg) / 2
-        if avg_distance == float('inf'):
-            return True
-
-        difference = abs(left_avg - right_avg)
-        threshold = 0.1 * avg_distance  # 10% tolerance
-
-        is_symmetric = difference < threshold
-        rospy.loginfo("Obstacle symmetry check: left={:.2f}m, right={:.2f}m, symmetric={}".format(left_avg, right_avg, is_symmetric))
-        return is_symmetric
-
-    def halt_robot(self):
-        """
-        Handle collision by immediately halting the robot
-        """
-        halt_msg = Twist()
-        self.cmd_vel_pub.publish(halt_msg)
-        
-        # Set state to HALT - robot will stay halted until non-zero teleop command
-        self.state = 'HALT'
-
-        rospy.loginfo("Robot halted - waiting for non-zero teleop command to resume")
-    
-    def reset_velocity(self):
-        """
-        Reset the velocity of the robot
-        """
-        reset_msg = Twist()
-        self.cmd_vel_pub.publish(reset_msg)
-
 
     def on_symmetric_obstacle_ahead(self):
         """
@@ -270,6 +170,26 @@ class ReactiveController:
         self._set_position_after_turn()
         self.obstacle_detected = False
 
+    def turn_randomly(self):
+        """
+        Turn randomly
+        """
+        # i need to check if the robot has driven FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN
+        if self.odom_data is None or self.x_position_after_turn is None or self.y_position_after_turn is None:
+            return
+        
+        # calculate distance from position_after_turn to odom_data
+        distance = np.sqrt((self.x_position_after_turn - self.odom_data.pose.pose.position.x)**2 + (self.y_position_after_turn - self.odom_data.pose.pose.position.y)**2)
+        if distance > FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN * METERS_PER_FEET:
+            turn_angle = random.uniform(-MAX_RANDOM_TURN_DEGREE_ANGLE, MAX_RANDOM_TURN_DEGREE_ANGLE)
+            self.execute_turn(np.radians(turn_angle))
+
+    def drive_forward(self):
+        forward_msg = Twist()
+        forward_msg.linear.x = .2
+        forward_msg.angular.x = 0.0
+        self.cmd_vel_pub.publish(forward_msg)
+
     def execute_turn(self, angle_radians):
         """
         Execute a turn by the specified angle
@@ -298,31 +218,108 @@ class ReactiveController:
         # record position after turn
         self._set_position_after_turn()
 
+    def is_obstacle_symmetric(self, front_ranges=None):
+        """
+        Determine if obstacle is symmetric by comparing left and right sides
+        """
+        if front_ranges is None:
+            front_ranges, _ = self._compute_front_ranges_and_threshold()
+            if front_ranges is None:
+                return True
+
+        if len(front_ranges) < 3:
+            return True  # Default to symmetric if not enough data
+
+        left_avg, right_avg = self._split_left_right(front_ranges)
+
+        # Consider symmetric if difference is small
+        avg_distance = (left_avg + right_avg) / 2
+        if avg_distance == float('inf'):
+            return True
+
+        difference = abs(left_avg - right_avg)
+        threshold = 0.1 * avg_distance  # 10% tolerance
+
+        is_symmetric = difference < threshold
+        rospy.loginfo("Obstacle symmetry check: left={:.2f}m, right={:.2f}m, symmetric={}".format(left_avg, right_avg, is_symmetric))
+        return is_symmetric
+
+    def halt_robot(self):
+        """
+        Handle collision by immediately halting the robot
+        """
+        halt_msg = Twist()
+        self.cmd_vel_pub.publish(halt_msg)
+        
+        # Set state to HALT - robot will stay halted until non-zero teleop command
+        self.state = 'HALT'
+
+        rospy.loginfo("Robot halted - waiting for non-zero teleop command to resume")
+    
+    def reset_velocity(self):
+        """
+        Reset the velocity of the robot
+        """
+        reset_msg = Twist()
+        self.cmd_vel_pub.publish(reset_msg)
+
+    def bumper_callback(self, data):
+        """
+        Callback function for bumper events
+        """
+        if data.state == BumperEvent.PRESSED:
+            collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
+            rospy.loginfo(collision_detected_str)
+            self.bumper_pressed = True
+            self.collision_detected = True
+            self.state = 'COLLISION'
+            self.collision_time = rospy.Time.now()
+            self.halt_robot()
+        elif data.state == BumperEvent.RELEASED:
+            bumper_relaesed_str = "Bumper released: " + str(data.bumper)
+            rospy.loginfo(bumper_relaesed_str)
+            self.bumper_pressed = False
+            # Start debounce timer; run loop will clear collision after stable release
+            self.collision_release_time = rospy.Time.now()
+
+    def laser_callback(self, data):
+        """
+        Callback function for laser scan data
+        """
+        self.laser_data = data
+
+    def odom_callback(self, data):
+        """
+        Callback function for odometry data
+        """
+        self.odom_data = data
+
+    def teleop_callback(self, msg):
+        if self._is_nonzero_twist(msg):
+            time_since_collision = (rospy.Time.now() - self.collision_time).to_sec() if self.collision_time else float('inf')
+            if time_since_collision > COLLISION_TIMEOUT_SEC:
+                self.last_nonzero_teleop_time = rospy.Time.now()
+                # If robot is in HALT state, resume autonomous operation
+                if self.state == 'HALT':
+                    self.state = 'DRIVE_FORWARD'
+                    self.collision_detected = False
+
     def _set_position_after_turn(self):
         self.x_position_after_turn = self.odom_data.pose.pose.position.x
         self.y_position_after_turn = self.odom_data.pose.pose.position.y
 
+    def _is_nonzero_twist(self, msg):
+        return (abs(msg.linear.x) > TELEOP_EPS or
+                abs(msg.linear.y) > TELEOP_EPS or
+                abs(msg.linear.z) > TELEOP_EPS or
+                abs(msg.angular.x) > TELEOP_EPS or
+                abs(msg.angular.y) > TELEOP_EPS or
+                abs(msg.angular.z) > TELEOP_EPS)
 
-    def turn_randomly(self):
-        """
-        Turn randomly
-        """
-        # i need to check if the robot has driven FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN
-        if self.odom_data is None or self.x_position_after_turn is None or self.y_position_after_turn is None:
-            return
-        
-        # calculate distance from position_after_turn to odom_data
-        distance = np.sqrt((self.x_position_after_turn - self.odom_data.pose.pose.position.x)**2 + (self.y_position_after_turn - self.odom_data.pose.pose.position.y)**2)
-        if distance > FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN * METERS_PER_FEET:
-            turn_angle = random.uniform(-MAX_RANDOM_TURN_DEGREE_ANGLE, MAX_RANDOM_TURN_DEGREE_ANGLE)
-            self.execute_turn(np.radians(turn_angle))
-
-
-    def drive_forward(self):
-        forward_msg = Twist()
-        forward_msg.linear.x = .2
-        forward_msg.angular.x = 0.0
-        self.cmd_vel_pub.publish(forward_msg)
+    def _teleop_active(self):
+        if self.last_nonzero_teleop_time is None:
+            return False
+        return (rospy.Time.now() - self.last_nonzero_teleop_time).to_sec() < TELEOP_IDLE_SEC
 
     def _compute_front_ranges_and_threshold(self):
         """
