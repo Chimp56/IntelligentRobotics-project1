@@ -16,7 +16,7 @@ The behaviors your robot will carry out are as follows, ordered from highest pri
 
 ## Instructions
 
-Clone the repository into your catkin workspace:
+Clone the repository into your catkin workspace src:
 
 ```bashcd ~/catkin_ws/src
 git clone https://github.com/Chimp56/IntelligentRobotics-project1 project1
