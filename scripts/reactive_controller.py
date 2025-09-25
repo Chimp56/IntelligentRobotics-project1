@@ -186,6 +186,7 @@ class ReactiveController:
         """
         Handle collision by immediately halting the robot
         TODO: check if this means to stop the robot completely until its moved manually or stop in place while it turns and drive away
+        FIXME: turtlebot moves slight while bumper in contact
         """
         halt_msg = Twist()
 
