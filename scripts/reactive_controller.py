@@ -130,7 +130,6 @@ class ReactiveController:
         """
         Determine if obstacle is symmetric by comparing left and right sides
         """
-        # TODO: robot is too sensitive to symmetry, it reads symmetry when obstacle is not symmetric
         if front_ranges is None:
             front_ranges, _ = self._compute_front_ranges_and_threshold()
             if front_ranges is None:
@@ -141,13 +140,13 @@ class ReactiveController:
 
         left_avg, right_avg = self._split_left_right(front_ranges)
 
-        # Consider symmetric if difference is small (within 20% of average)
+        # Consider symmetric if difference is small
         avg_distance = (left_avg + right_avg) / 2
         if avg_distance == float('inf'):
             return True
 
         difference = abs(left_avg - right_avg)
-        threshold = 0.2 * avg_distance  # 20% tolerance
+        threshold = 0.1 * avg_distance  # 10% tolerance
 
         is_symmetric = difference < threshold
         rospy.loginfo("Obstacle symmetry check: left={:.2f}m, right={:.2f}m, symmetric={}".format(left_avg, right_avg, is_symmetric))
@@ -168,7 +167,6 @@ class ReactiveController:
     def on_symmetric_obstacle_ahead(self):
         """
         Handle symmetric obstacle by turning a random degree angle
-        # TODO: robot appears to turn in to obstacles instead of away
         """
         rospy.loginfo("Symmetric obstacle detected - executing escape turn")
         

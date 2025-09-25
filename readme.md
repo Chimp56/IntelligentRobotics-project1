@@ -71,6 +71,8 @@ https://robotics.stackexchange.com/questions/74901/how-can-i-tell-the-distance-f
 
 https://www.mathworks.com/help/nav/ug/obstacle-avoidance-with-turtlebot-and-vfh.html
 
+https://www.theconstruct.ai/read-laserscan-data/
+
 
 ### Vincent reactive mapping debugger shortcut
 
