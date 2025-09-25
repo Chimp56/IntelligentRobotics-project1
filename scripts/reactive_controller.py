@@ -284,7 +284,7 @@ class ReactiveController:
         rate = rospy.Rate(10)
         
         while (rospy.Time.now() - start_time).to_sec() < turn_duration:
-            if self.collision_detected or self._teleop_active():
+            if self.collision_detected: # or self._teleop_active():
                 break
             self.cmd_vel_pub.publish(turn_msg)
             rate.sleep()
