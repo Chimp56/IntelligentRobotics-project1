@@ -309,7 +309,7 @@ class ReactiveController:
         # calculate distance from position_after_turn to odom_data
         distance = np.sqrt((self.x_position_after_turn - self.odom_data.pose.pose.position.x)**2 + (self.y_position_after_turn - self.odom_data.pose.pose.position.y)**2)
         if distance > FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN * METERS_PER_FEET:
-            turn_angle = random.uniform(MAX_RANDOM_TURN_DEGREE_ANGLE, MAX_RANDOM_TURN_DEGREE_ANGLE)
+            turn_angle = random.uniform(-MAX_RANDOM_TURN_DEGREE_ANGLE, MAX_RANDOM_TURN_DEGREE_ANGLE)
             self.execute_turn(np.radians(turn_angle))
 
 
