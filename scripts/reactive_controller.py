@@ -57,6 +57,8 @@ class ReactiveController:
                 rospy.loginfo("Robot halted due to collision")
                 rate.sleep()
                 continue
+
+            #TODO: if turtlebot is recieving keyboard movement, should everything below be skipped
             
             # Check for obstacles ahead
             if self.laser_data is not None:
@@ -128,6 +130,7 @@ class ReactiveController:
         """
         Determine if obstacle is symmetric by comparing left and right sides
         """
+        # TODO: robot is too sensitive to symmetry, it reads symmetry when obstacle is not symmetric
         if front_ranges is None:
             front_ranges, _ = self._compute_front_ranges_and_threshold()
             if front_ranges is None:
@@ -165,6 +168,7 @@ class ReactiveController:
     def on_symmetric_obstacle_ahead(self):
         """
         Handle symmetric obstacle by turning a random degree angle
+        # TODO: robot appears to turn in to obstacles instead of away
         """
         rospy.loginfo("Symmetric obstacle detected - executing escape turn")
         
@@ -288,6 +292,9 @@ class ReactiveController:
         angle_min = self.laser_data.angle_min
         angle_increment = self.laser_data.angle_increment
 
+        # Filter out invalid readings (inf, nan)
+        ranges = ranges[np.isfinite(ranges)]
+
         # Front sector (roughly -30 to +30 degrees)
         front_start_idx = int((-np.pi/6 - angle_min) / angle_increment)
         front_end_idx = int((np.pi/6 - angle_min) / angle_increment)
@@ -310,8 +317,6 @@ class ReactiveController:
         mid = len(front_ranges) // 2
         left_ranges = front_ranges[:mid]
         right_ranges = front_ranges[mid:]
-        left_ranges = left_ranges[np.isfinite(left_ranges)]
-        right_ranges = right_ranges[np.isfinite(right_ranges)]
         left_avg = np.mean(left_ranges) if len(left_ranges) > 0 else 0.0
         right_avg = np.mean(right_ranges) if len(right_ranges) > 0 else 0.0
         return left_avg, right_avg
