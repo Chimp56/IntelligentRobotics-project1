@@ -216,10 +216,10 @@ class ReactiveController:
         angle_increment = self.laser_data.angle_increment
         
         # Get left and right sectors
-        left_start = int((-np.pi/2 - angle_min) / angle_increment)
-        left_end = int((-np.pi/6 - angle_min) / angle_increment)
-        right_start = int((np.pi/6 - angle_min) / angle_increment)
-        right_end = int((np.pi/2 - angle_min) / angle_increment)
+        left_start = int((np.pi/2 - angle_min) / angle_increment)
+        left_end = int((np.pi/6 - angle_min) / angle_increment)
+        right_start = int((-np.pi/6 - angle_min) / angle_increment)
+        right_end = int((-np.pi/2 - angle_min) / angle_increment)
         
         # Ensure indices are within bounds
         left_start = max(0, left_start)
@@ -237,7 +237,7 @@ class ReactiveController:
         right_avg = np.mean(right_ranges) if len(right_ranges) > 0 else 0
         
         # Turn towards clearer side
-        if left_avg < right_avg:
+        if left_avg > right_avg:
             rospy.loginfo("Turning left (clearer path)")
             self.execute_turn(np.radians(90))  # Turn left
         else:
