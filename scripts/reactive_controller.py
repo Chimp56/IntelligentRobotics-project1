@@ -19,6 +19,8 @@ FEET_PER_METER = 3.28084
 METERS_PER_FEET = 1 / FEET_PER_METER
 CAMERA_TO_BASE_FOOTPRINT_OFFSET_METER = 0.087
 CAMERA_TO_BUMPER_OFFSET_METER = 0.40
+BUMPER_DEBOUNCE_SEC = 0.3  # time window to consider bumper truly released
+COLLISION_HALT_HZ = 10     
 
 class ReactiveController:
     def __init__(self):
@@ -44,6 +46,8 @@ class ReactiveController:
         self.odom_data = None
         self.x_position_after_turn = None
         self.y_position_after_turn = None
+        self.bumper_pressed = False
+        self.collision_release_time = None
 
     def run(self):
         """
@@ -54,10 +58,11 @@ class ReactiveController:
         while not rospy.is_shutdown():
             # Check for collision first
             if self.collision_detected:
-                rospy.loginfo("Robot halted due to collision")
+                # Continuously publish zero velocities while in collision
+                self.halt_robot()
                 rate.sleep()
                 continue
-
+            
             #TODO: if turtlebot is recieving keyboard movement, should everything below be skipped
             
             # Check for obstacles ahead
@@ -80,13 +85,16 @@ class ReactiveController:
         if data.state == BumperEvent.PRESSED:
             collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
             rospy.loginfo(collision_detected_str)
+            self.bumper_pressed = True
             self.collision_detected = True
             self.state = 'COLLISION'
             self.halt_robot()
         elif data.state == BumperEvent.RELEASED:
             bumper_relaesed_str = "Bumper released: " + str(data.bumper)
             rospy.loginfo(bumper_relaesed_str)
-            self.collision_detected = False
+            self.bumper_pressed = False
+            # Start debounce timer; run loop will clear collision after stable release
+            self.collision_release_time = rospy.Time.now()
 
     def laser_callback(self, data):
         """
@@ -155,14 +163,27 @@ class ReactiveController:
     def halt_robot(self):
         """
         Handle collision by immediately halting the robot
-        TODO: check if this means to stop the robot completely until its moved manually or stop in place while it turns and drive away
-        FIXME: turtlebot moves slight while bumper in contact
+        TODO: check if this means to stop the robot completely until its moved manually
         """
         halt_msg = Twist()
 
         # Publish the halt command
         self.cmd_vel_pub.publish(halt_msg)
         
+        # Debounce: only clear collision after bumper has been released
+        # for BUMPER_DEBOUNCE_SEC seconds
+        if not self.bumper_pressed and self.collision_release_time is not None:
+            if (rospy.Time.now() - self.collision_release_time).to_sec() >= BUMPER_DEBOUNCE_SEC:
+                self.collision_detected = False
+                self.collision_release_time = None
+    
+    def reset_velocity(self):
+        """
+        Reset the velocity of the robot
+        """
+        reset_msg = Twist()
+        self.cmd_vel_pub.publish(reset_msg)
+
 
     def on_symmetric_obstacle_ahead(self):
         """
@@ -216,7 +237,7 @@ class ReactiveController:
             rate.sleep()
 
         # Stop turning
-        self.halt_robot()
+        self.reset_velocity()
         self._set_position_after_turn()
         self.obstacle_detected = False
 
@@ -246,7 +267,7 @@ class ReactiveController:
             rate.sleep()
         
         # Stop after turn
-        self.halt_robot()
+        self.reset_velocity()
 
         # record position after turn
         self._set_position_after_turn()
