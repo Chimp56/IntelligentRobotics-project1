@@ -28,7 +28,7 @@ TELEOP_EPS = 1e-3
 class ReactiveController:
     def __init__(self):
         self.state = 'DRIVE_FORWARD'
-        
+
         rospy.init_node('reactive_controller', anonymous=True)
         
         # Publisher for velocity commands (use navi navi to seperate concerns)
@@ -72,6 +72,9 @@ class ReactiveController:
     def _teleop_callback(self, msg):
         if self._is_nonzero_twist(msg):
             self.last_nonzero_teleop_time = rospy.Time.now()
+            # If robot is in HALT state, resume autonomous operation
+            if self.state == 'HALT':
+                self.state = 'DRIVE_FORWARD'
 
     def run(self):
         """
@@ -81,7 +84,7 @@ class ReactiveController:
         
         while not rospy.is_shutdown():
             # Check for collision first
-            if self.collision_detected:
+            if self.collision_detected or self.state == 'HALT':
                 # Continuously publish zero velocities while in collision
                 self.halt_robot()
                 rate.sleep()
@@ -190,18 +193,14 @@ class ReactiveController:
     def halt_robot(self):
         """
         Handle collision by immediately halting the robot
-        TODO: check if this means to stop the robot completely until its moved manually
         """
         halt_msg = Twist()
-
-        # Publish the halt command
         self.cmd_vel_pub.publish(halt_msg)
         
-        # Debounce: only clear collision after bumper has been released for BUMPER_DEBOUNCE_SEC seconds
-        if not self.bumper_pressed and self.collision_release_time is not None:
-            if (rospy.Time.now() - self.collision_release_time).to_sec() >= BUMPER_DEBOUNCE_SEC:
-                self.collision_detected = False
-                self.collision_release_time = None
+        # Set state to HALT - robot will stay halted until non-zero teleop command
+        self.state = 'HALT'
+
+        rospy.loginfo("Robot halted - waiting for non-zero teleop command to resume")
     
     def reset_velocity(self):
         """
