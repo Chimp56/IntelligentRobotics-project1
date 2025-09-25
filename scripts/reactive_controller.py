@@ -36,7 +36,7 @@ class ReactiveController:
         
         # Subscriber for teleop twists to detect human control
         self.last_nonzero_teleop_time = None
-        # self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
+        self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
         
         # Subscriber for bumper events
         self.bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, self.bumper_callback)
@@ -56,22 +56,22 @@ class ReactiveController:
         self.bumper_pressed = False
         self.collision_release_time = None
 
-    # def _is_nonzero_twist(self, msg):
-    #     return (abs(msg.linear.x) > TELEOP_EPS or
-    #             abs(msg.linear.y) > TELEOP_EPS or
-    #             abs(msg.linear.z) > TELEOP_EPS or
-    #             abs(msg.angular.x) > TELEOP_EPS or
-    #             abs(msg.angular.y) > TELEOP_EPS or
-    #             abs(msg.angular.z) > TELEOP_EPS)
+    def _is_nonzero_twist(self, msg):
+        return (abs(msg.linear.x) > TELEOP_EPS or
+                abs(msg.linear.y) > TELEOP_EPS or
+                abs(msg.linear.z) > TELEOP_EPS or
+                abs(msg.angular.x) > TELEOP_EPS or
+                abs(msg.angular.y) > TELEOP_EPS or
+                abs(msg.angular.z) > TELEOP_EPS)
 
-    # def _teleop_active(self):
-    #     if self.last_nonzero_teleop_time is None:
-    #         return False
-    #     return (rospy.Time.now() - self.last_nonzero_teleop_time).to_sec() < TELEOP_IDLE_SEC
+    def _teleop_active(self):
+        if self.last_nonzero_teleop_time is None:
+            return False
+        return (rospy.Time.now() - self.last_nonzero_teleop_time).to_sec() < TELEOP_IDLE_SEC
 
-    # def _teleop_callback(self, msg):
-    #     if self._is_nonzero_twist(msg):
-    #         self.last_nonzero_teleop_time = rospy.Time.now()
+    def _teleop_callback(self, msg):
+        if self._is_nonzero_twist(msg):
+            self.last_nonzero_teleop_time = rospy.Time.now()
 
     def run(self):
         """
@@ -88,9 +88,9 @@ class ReactiveController:
                 continue
             
             # Pause autonomy if teleop recently active
-            # if self._teleop_active():
-            #     rate.sleep()
-            #     continue
+            if self._teleop_active():
+                rate.sleep()
+                continue
             
             # Check for obstacles ahead
             if self.laser_data is not None:
@@ -284,7 +284,7 @@ class ReactiveController:
         rate = rospy.Rate(10)
         
         while (rospy.Time.now() - start_time).to_sec() < turn_duration:
-            if self.collision_detected: # or self._teleop_active():
+            if self.collision_detected or self._teleop_active():
                 break
             self.cmd_vel_pub.publish(turn_msg)
             rate.sleep()

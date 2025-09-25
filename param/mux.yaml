@@ -17,7 +17,7 @@ subscribers:
   - name:        "Teleoperation"
     topic:       "input/teleop"
     timeout:     2
-    priority:    7
+    priority:    4
   - name:        "Switch"
     topic:       "input/switch"
     timeout:     1.0
