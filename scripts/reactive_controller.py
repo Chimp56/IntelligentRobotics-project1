@@ -217,6 +217,7 @@ class ReactiveController:
 
         # Stop turning
         self.halt_robot()
+        self._set_position_after_turn()
         self.obstacle_detected = False
 
     def execute_turn(self, angle_radians):
@@ -248,6 +249,9 @@ class ReactiveController:
         self.halt_robot()
 
         # record position after turn
+        self._set_position_after_turn()
+
+    def _set_position_after_turn(self):
         self.x_position_after_turn = self.odom_data.pose.pose.position.x
         self.y_position_after_turn = self.odom_data.pose.pose.position.y
 
