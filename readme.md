@@ -47,7 +47,7 @@ roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
 
 To control turtlebot using keyboard, run:
-```
+```bash
 roslaunch turtlebot_teleop keyboard_teleop.launch
 ```
 

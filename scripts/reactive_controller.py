@@ -22,14 +22,20 @@ CAMERA_TO_BUMPER_OFFSET_METER = 0.40
 BUMPER_DEBOUNCE_SEC = 0.3  # time window to consider bumper truly released
 COLLISION_HALT_HZ = 10     
 
+TELEOP_IDLE_SEC = 2.0
+
 class ReactiveController:
     def __init__(self):
         self.state = 'DRIVE_FORWARD'
         
         rospy.init_node('reactive_controller', anonymous=True)
         
-        # Publisher for velocity commands
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size=1)
+        # Publisher for velocity commands (use navi input to seperate concerns)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
+        
+        # Subscriber for teleop twists to detect human control
+        self.last_teleop_time = None
+        self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
         
         # Subscriber for bumper events
         self.bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, self.bumper_callback)
@@ -49,6 +55,14 @@ class ReactiveController:
         self.bumper_pressed = False
         self.collision_release_time = None
 
+    def _teleop_active(self):
+        if self.last_teleop_time is None:
+            return False
+        return (rospy.Time.now() - self.last_teleop_time).to_sec() < TELEOP_IDLE_SEC
+
+    def _teleop_callback(self, msg):
+        self.last_teleop_time = rospy.Time.now()
+
     def run(self):
         """
         High level control loop
@@ -63,7 +77,10 @@ class ReactiveController:
                 rate.sleep()
                 continue
             
-            #TODO: if turtlebot is recieving keyboard movement, should everything below be skipped
+            # Pause autonomy if teleop recently active
+            if self._teleop_active():
+                rate.sleep()
+                continue
             
             # Check for obstacles ahead
             if self.laser_data is not None:
@@ -170,8 +187,7 @@ class ReactiveController:
         # Publish the halt command
         self.cmd_vel_pub.publish(halt_msg)
         
-        # Debounce: only clear collision after bumper has been released
-        # for BUMPER_DEBOUNCE_SEC seconds
+        # Debounce: only clear collision after bumper has been released for BUMPER_DEBOUNCE_SEC seconds
         if not self.bumper_pressed and self.collision_release_time is not None:
             if (rospy.Time.now() - self.collision_release_time).to_sec() >= BUMPER_DEBOUNCE_SEC:
                 self.collision_detected = False
@@ -251,18 +267,15 @@ class ReactiveController:
         
         # Create turn command
         turn_msg = Twist()
-        turn_msg.linear.x = 0.0
-        turn_msg.linear.y = 0.0
-        turn_msg.linear.z = 0.0
-        turn_msg.angular.x = 0.0
-        turn_msg.angular.y = 0.0
         turn_msg.angular.z = angular_velocity if angle_radians > 0 else -angular_velocity
         
-        # Execute turn
+        # Execute turn, but break if teleop activates or collision happens
         start_time = rospy.Time.now()
         rate = rospy.Rate(10)
         
         while (rospy.Time.now() - start_time).to_sec() < turn_duration:
+            if self.collision_detected or self._teleop_active():
+                break
             self.cmd_vel_pub.publish(turn_msg)
             rate.sleep()
         
