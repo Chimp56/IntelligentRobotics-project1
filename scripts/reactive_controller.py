@@ -36,7 +36,7 @@ class ReactiveController:
         
         # Subscriber for teleop twists to detect human control
         self.last_nonzero_teleop_time = None
-        self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
+        # self.teleop_sub = rospy.Subscriber('/cmd_vel_mux/input/teleop', Twist, self._teleop_callback)
         
         # Subscriber for bumper events
         self.bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, self.bumper_callback)
