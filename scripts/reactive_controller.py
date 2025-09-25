@@ -311,12 +311,14 @@ class ReactiveController:
         """
         Split the front-sector ranges into left and right halves and return their means.
         Returns (left_avg, right_avg). If side has no readings, 0 is returned for that side.
+        NOTE: LaserScan angles increase from right (-) to left (+), and our front_ranges
+        slice is ordered from right to left. Therefore, the SECOND half is LEFT.
         """
         if front_ranges is None or len(front_ranges) == 0:
             return 0.0, 0.0
         mid = len(front_ranges) // 2
-        left_ranges = front_ranges[:mid]
-        right_ranges = front_ranges[mid:]
+        right_ranges = front_ranges[:mid]
+        left_ranges = front_ranges[mid:]
         left_avg = np.mean(left_ranges) if len(left_ranges) > 0 else 0.0
         right_avg = np.mean(right_ranges) if len(right_ranges) > 0 else 0.0
         return left_avg, right_avg
