@@ -41,6 +41,9 @@ class ReactiveController:
         self.collision_detected = False
         self.obstacle_detected = False
         self.laser_data = None
+        self.odom_data = None
+        self.x_position_after_turn = None
+        self.y_position_after_turn = None
 
     def run(self):
         """
