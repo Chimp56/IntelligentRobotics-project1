@@ -19,8 +19,7 @@ FEET_PER_METER = 3.28084
 METERS_PER_FEET = 1 / FEET_PER_METER
 CAMERA_TO_BASE_FOOTPRINT_OFFSET_METER = 0.087
 CAMERA_TO_BUMPER_OFFSET_METER = 0.40
-BUMPER_DEBOUNCE_SEC = 0.3  # time window to consider bumper truly released
-COLLISION_HALT_HZ = 10     
+COLLISION_TIMEOUT_SEC = 3.0
 
 TELEOP_IDLE_SEC = 2.0
 TELEOP_EPS = 1e-3
@@ -55,6 +54,7 @@ class ReactiveController:
         self.y_position_after_turn = None
         self.bumper_pressed = False
         self.collision_release_time = None
+        self.collision_time = None
 
     def _is_nonzero_twist(self, msg):
         return (abs(msg.linear.x) > TELEOP_EPS or
@@ -71,10 +71,13 @@ class ReactiveController:
 
     def _teleop_callback(self, msg):
         if self._is_nonzero_twist(msg):
-            self.last_nonzero_teleop_time = rospy.Time.now()
-            # If robot is in HALT state, resume autonomous operation
-            if self.state == 'HALT':
-                self.state = 'DRIVE_FORWARD'
+            time_since_collision = (rospy.Time.now() - self.collision_time).to_sec() if self.collision_time else float('inf')
+            if time_since_collision > COLLISION_TIMEOUT_SEC:
+                self.last_nonzero_teleop_time = rospy.Time.now()
+                # If robot is in HALT state, resume autonomous operation
+                if self.state == 'HALT':
+                    self.state = 'DRIVE_FORWARD'
+                    self.collision_detected = False
 
     def run(self):
         """
@@ -118,6 +121,7 @@ class ReactiveController:
             self.bumper_pressed = True
             self.collision_detected = True
             self.state = 'COLLISION'
+            self.collision_time = rospy.Time.now()
             self.halt_robot()
         elif data.state == BumperEvent.RELEASED:
             bumper_relaesed_str = "Bumper released: " + str(data.bumper)
