@@ -268,14 +268,17 @@ class ReactiveController:
         """
         Callback function for bumper events
         """
-        if data.state == BumperEvent.PRESSED and self.collision_release_time > BUMPER_DEBOUNCE_SEC:
-            collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
-            rospy.loginfo(collision_detected_str)
-            self.bumper_pressed = True
-            self.collision_detected = True
-            self.state = 'COLLISION'
-            self.collision_time = rospy.Time.now()
-            self.halt_robot()
+        if data.state == BumperEvent.PRESSED:
+            # Check if enough time has passed since last release (debounce)
+            time_since_release = (rospy.Time.now() - self.collision_release_time).to_sec() if self.collision_release_time else float('inf')
+            if self.collision_release_time is None or time_since_release > BUMPER_DEBOUNCE_SEC:
+                collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
+                rospy.loginfo(collision_detected_str)
+                self.bumper_pressed = True
+                self.collision_detected = True
+                self.state = 'COLLISION'
+                self.collision_time = rospy.Time.now()
+                self.halt_robot()
         elif data.state == BumperEvent.RELEASED:
             bumper_relaesed_str = "Bumper released: " + str(data.bumper)
             rospy.loginfo(bumper_relaesed_str)
