@@ -20,6 +20,7 @@ METERS_PER_FEET = 1 / FEET_PER_METER
 CAMERA_TO_BASE_FOOTPRINT_OFFSET_METER = 0.087
 CAMERA_TO_BUMPER_OFFSET_METER = 0.40
 COLLISION_TIMEOUT_SEC = 3.0
+BUMPER_DEBOUNCE_SEC = 0.5
 
 TELEOP_IDLE_SEC = 2.0
 TELEOP_EPS = 1e-3
@@ -267,7 +268,7 @@ class ReactiveController:
         """
         Callback function for bumper events
         """
-        if data.state == BumperEvent.PRESSED:
+        if data.state == BumperEvent.PRESSED and self.collision_release_time > BUMPER_DEBOUNCE_SEC:
             collision_detected_str = 'Collision detected! Bumper:' + str(data.bumper) + ' (0=LEFT, 1=CENTER, 2=RIGHT)'
             rospy.loginfo(collision_detected_str)
             self.bumper_pressed = True
