@@ -30,8 +30,8 @@ class ReactiveController:
         
         rospy.init_node('reactive_controller', anonymous=True)
         
-        # Publisher for velocity commands (use navi navigation to seperate concerns)
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/navigation', Twist, queue_size=1)
+        # Publisher for velocity commands (use navi navi to seperate concerns)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/navi', Twist, queue_size=1)
         
         # Subscriber for teleop twists to detect human control
         self.last_teleop_time = None
