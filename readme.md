@@ -1,5 +1,7 @@
 # Project 1 - Reactive Robotics
 
+Uses subsumption architecture.
+
 The behaviors your robot will carry out are as follows, ordered from highest priority to lowest:
 
 1. Halt if collision(s) detected by bumper(s).
@@ -24,10 +26,11 @@ source devel/setup.bash
 ```
 
 To launch the world, robot, and controller, run the following command in your terminal:
-
+** Note - only used for testing the world. May be removed later. **
 ```bash
 roslaunch project1 room_hallway_world.launch
 ```
+
 
 To start mapping the environment using SLAM, run:
 
@@ -44,7 +47,7 @@ roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
 
 To control turtlebot using keyboard, run:
-```
+```bash
 roslaunch turtlebot_teleop keyboard_teleop.launch
 ```
 
@@ -62,14 +65,18 @@ https://docs.ros.org/en/noetic/api/turtlebot3_msgs/html/msg/SensorState.html
 
 https://docs.ros.org/en/hydro/api/kobuki_msgs/html/msg/BumperEvent.html
 
-https://wiki.ros.org/kobuki_bumper2pc/hydro
-
 ### escape obstacle
 
 https://robotics.stackexchange.com/questions/74901/how-can-i-tell-the-distance-from-a-turtlebot-to-an-obstacle
 
 https://www.mathworks.com/help/nav/ug/obstacle-avoidance-with-turtlebot-and-vfh.html
 
+https://www.theconstruct.ai/read-laserscan-data/
+
+
+### keyboard movement
+
+https://wiki.ros.org/cmd_vel_mux
 
 ### Vincent reactive mapping debugger shortcut
 
