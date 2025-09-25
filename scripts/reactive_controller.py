@@ -5,6 +5,7 @@ import numpy as np
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 
 
 
@@ -33,6 +34,9 @@ class ReactiveController:
         
         # Subscriber for laser scan data
         self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+
+        # Subscriber for odometry data
+        self.odom_sub = rospy.Subscriber('/odom', Odometry, self.odom_callback)
         
         self.collision_detected = False
         self.obstacle_detected = False
@@ -55,6 +59,9 @@ class ReactiveController:
             if self.laser_data is not None:
                 self.check_obstacles_ahead()
             
+            # if drove FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN turn
+            self.turn_randomly()
+
             # Drive forward if no obstacles
             if not self.obstacle_detected and not self.collision_detected:
                 self.drive_forward()
@@ -81,6 +88,12 @@ class ReactiveController:
         Callback function for laser scan data
         """
         self.laser_data = data
+
+    def odom_callback(self, data):
+        """
+        Callback function for odometry data
+        """
+        self.odom_data = data
 
     def check_obstacles_ahead(self):
         """
@@ -169,6 +182,7 @@ class ReactiveController:
     def halt_robot(self):
         """
         Handle collision by immediately halting the robot
+        TODO: check if this means to stop the robot completely until its moved manually or stop in place while it turns and drive away
         """
         halt_msg = Twist()
 
@@ -201,6 +215,7 @@ class ReactiveController:
     def on_asymmetric_obstacle_ahead(self):
         """
         Handle asymmetric obstacle by turning towards the clearer side
+        TODO: this behavior should continue only so long as there are asymmetric obstacles within 1ft in front of the robot.
         """
         rospy.loginfo("Asymmetric obstacle detected - turning towards clearer side")
         
@@ -275,6 +290,24 @@ class ReactiveController:
         # Stop after turn
         self.halt_robot()
 
+        # record position after turn
+        self.x_position_after_turn = self.odom_data.pose.pose.position.x
+        self.y_position_after_turn = self.odom_data.pose.pose.position.y
+
+
+    def turn_randomly(self):
+        """
+        Turn randomly
+        """
+        # i need to check if the robot has driven FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN
+        if self.odom_data is None:
+            return
+        
+        # calculate distance from position_after_turn to odom_data
+        distance = np.sqrt((self.x_position_after_turn - self.odom_data.pose.pose.position.x)**2 + (self.y_position_after_turn - self.odom_data.pose.pose.position.y)**2)
+        if distance > FORWARD_MOVMENT_DISTANCE_FEET_BEFORE_TURN * METERS_PER_FEET:
+            turn_angle = random.uniform(MAX_RANDOM_TURN_DEGREE_ANGLE, MAX_RANDOM_TURN_DEGREE_ANGLE)
+            self.execute_turn(np.radians(turn_angle))
 
 
     def drive_forward(self):
