@@ -11,8 +11,15 @@ The behaviors your robot will carry out are as follows, ordered from highest pri
 5. Turn randomly (uniformly sampled within ±15°) after every 1ft of forward movement.
 6. Drive forward.
 
+demo video
+
+https://drive.google.com/file/d/1KNg_iiYCrzm1qfIFRs7pNybqrN1o7ksH/view?usp=sharing
+
 ## Requirements
 - Python2
+- Ros melodic
+- Gazebo
+- Rviz
 
 ## Instructions
 
@@ -25,12 +32,9 @@ catkin_make
 source devel/setup.bash
 ```
 
-To launch the world, robot, and controller, run the following command in your terminal:
-** Note - only used for testing the world. May be removed later. **
 ```bash
-roslaunch project1 room_hallway_world.launch
+chmod +x ~/catkin_ws/src/project1/scripts/*.py
 ```
-
 
 To start mapping the environment using SLAM, run:
 
@@ -46,7 +50,7 @@ To watch the mapping process, open a new terminal and run:
 roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
 
-To control turtlebot using keyboard, run:
+To control turtlebot using keyboard, open a new terminal and run:
 ```bash
 roslaunch turtlebot_teleop keyboard_teleop.launch
 ```
